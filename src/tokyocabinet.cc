@@ -262,7 +262,7 @@ class TCWrap : public ObjectWrap {
     virtual uint64_t Fsiz () { assert(false); }
     virtual uint64_t Size () { assert(false); } // for ADB
     virtual bool Setindex (const char* name, int type) { assert(false); } // for TDB
-    virtual TCLIST * Misc (char *name, TCLIST *targs) { assert(false); } // for ADB
+    virtual TCLIST * Misc (const char *name, TCLIST *targs) { assert(false); } // for ADB
     // for BDB Cursor
     virtual bool First () { assert(false); } // for CUR
     virtual bool Last () { assert(false); } // for CUR
@@ -311,7 +311,7 @@ class TCWrap : public ObjectWrap {
         Persistent<Function> cb;
         bool hasCallback;
 
-        AsyncData (Handle<Value> cb_) {
+      AsyncData (Handle<Value> cb_) {
           HandleScope scope;
           assert(tcw); // make sure ArgsData is already initialized with This value
           tcw->Ref();
@@ -493,7 +493,7 @@ class TCWrap : public ObjectWrap {
         int vsiz;
 
       public:
-        PutData (const Arguments& args) : vbuf(args[1]), KeyData(args) {
+      PutData (const Arguments& args) :ArgsData(args), vbuf(args[1]), KeyData(args) {
           vsiz = vbuf.length();
         }
 
@@ -506,7 +506,7 @@ class TCWrap : public ObjectWrap {
     class PutAsyncData : public PutData, public AsyncData {
       public:
         PutAsyncData (const Arguments& args)
-          : PutData(args), AsyncData(args[2]), ArgsData(args) {}
+          : ArgsData(args), PutData(args), AsyncData(args[2]) {}
     };
 
     class PutkeepData : public PutData {
@@ -650,7 +650,7 @@ class TCWrap : public ObjectWrap {
 
     class GetData : public KeyData, public ValueData {
       public:
-        GetData (const Arguments& args) : KeyData(args), ArgsData(args) {}
+      GetData (const Arguments& args) : ArgsData(args), KeyData(args) {}
 
         bool
         run () {
@@ -824,7 +824,7 @@ class TCWrap : public ObjectWrap {
 
     class IternextData : public ValueData {
       public:
-        IternextData (const Arguments& args) {}
+      IternextData (const Arguments& args):ArgsData(args) {}
 
         bool run () {
           vbuf = tcw->Iternext(&vsiz);
@@ -1218,12 +1218,12 @@ class HDB : public TCWrap {
       return tchdbopen(hdb, path, omode);
     }
 
-    class OpenData : public FilenameData {
+    class OpenData : public virtual FilenameData {
       protected:
         int omode;
 
       public:
-        OpenData (const Arguments& args) : FilenameData(args) {
+      OpenData (const Arguments& args) : ArgsData(args), FilenameData(args) {
           omode = NOU(ARG1) ? HDBOREADER : ARG1->Int32Value();
         }
 
@@ -1244,7 +1244,7 @@ class HDB : public TCWrap {
     class OpenAsyncData : public OpenData, public AsyncData {
       public:
         OpenAsyncData (const Arguments& args)
-          : OpenData(args), AsyncData(args[2]), ArgsData(args) {}
+          : ArgsData(args), FilenameData(args), OpenData(args), AsyncData(args[2]) {}
     };
 
     DEFINE_ASYNC(Open)
@@ -1631,12 +1631,12 @@ class BDB : public TCWrap {
       return tcbdbopen(bdb, path, omode);
     }
 
-    class OpenData : public FilenameData {
+    class OpenData : public virtual FilenameData {
       protected:
         int omode;
 
       public:
-        OpenData (const Arguments& args) : FilenameData(args) {
+      OpenData (const Arguments& args) :ArgsData(args), FilenameData(args) {
           omode = NOU(ARG1) ? BDBOREADER : ARG1->Int32Value();
         }
 
@@ -1657,7 +1657,7 @@ class BDB : public TCWrap {
     class OpenAsyncData : public OpenData, public AsyncData {
       public:
         OpenAsyncData (const Arguments& args)
-          : OpenData(args), AsyncData(args[2]), ArgsData(args) {}
+          : ArgsData(args), FilenameData(args), OpenData(args), AsyncData(args[2]) {}
     };
 
     DEFINE_ASYNC(Open)
@@ -1994,7 +1994,7 @@ class CUR : TCWrap {
 
     class FirstData : public virtual ArgsData {
       public:
-        FirstData(const Arguments& args) : ArgsData() {}
+        FirstData(const Arguments& args) : ArgsData(args) {}
 
         bool run () {
           return tcw->First();
@@ -2006,7 +2006,7 @@ class CUR : TCWrap {
     class FirstAsyncData : public FirstData, public AsyncData {
       public:
         FirstAsyncData(const Arguments& args)
-          : AsyncData(args[0]), FirstData(args), ArgsData(args) {}
+          : ArgsData(args), AsyncData(args[0]), FirstData(args) {}
     };
 
     DEFINE_ASYNC(First)
@@ -2040,7 +2040,7 @@ class CUR : TCWrap {
 
     class JumpData : public KeyData {
       public:
-        JumpData(const Arguments& args) : KeyData(args) {}
+      JumpData(const Arguments& args) :ArgsData(args), KeyData(args) {}
 
         bool run () {
           return tcw->Jump(*kbuf, ksiz);
@@ -2112,7 +2112,7 @@ class CUR : TCWrap {
         int cpmode;
 
       public:
-        PutData(const Arguments& args) : KeyData(args) {
+      PutData(const Arguments& args) : ArgsData(args), KeyData(args) {
           cpmode = NOU(args[1]) ?
             BDBCPCURRENT : args[1]->Int32Value();
         }
@@ -2165,7 +2165,7 @@ class CUR : TCWrap {
 
     class KeyData : public ValueData {
       public:
-        KeyData(const Arguments& args) {}
+      KeyData(const Arguments& args) : ArgsData(args){}
 
         bool run () {
           vbuf = tcw->Key(&vsiz);
@@ -2189,7 +2189,7 @@ class CUR : TCWrap {
 
     class ValData : public ValueData {
       public:
-        ValData(const Arguments& args) {}
+      ValData(const Arguments& args) :ArgsData(args){}
 
         bool run () {
           vbuf = tcw->Val(&vsiz);
@@ -2344,12 +2344,12 @@ class FDB : public TCWrap {
       return tcfdbopen(fdb, path, omode);
     }
 
-    class OpenData : public FilenameData {
+    class OpenData : public virtual FilenameData {
       protected:
         int omode;
 
       public:
-        OpenData (const Arguments& args) : FilenameData(args) {
+      OpenData (const Arguments& args) :ArgsData(args), FilenameData(args) {
           omode = NOU(ARG1) ? FDBOREADER : ARG1->Int32Value();
         }
 
@@ -2370,7 +2370,7 @@ class FDB : public TCWrap {
     class OpenAsyncData : public OpenData, public AsyncData {
       public:
         OpenAsyncData (const Arguments& args)
-          : OpenData(args), AsyncData(args[2]), ArgsData(args) {}
+          : ArgsData(args), FilenameData(args), OpenData(args), AsyncData(args[2]) {}
     };
 
     DEFINE_ASYNC(Open)
@@ -2778,12 +2778,12 @@ class TDB : public TCWrap {
       return tctdbopen(tdb, path, omode);
     }
 
-    class OpenData : public FilenameData {
+    class OpenData : public virtual FilenameData {
       protected:
         int omode;
 
       public:
-        OpenData (const Arguments& args) : FilenameData(args) {
+      OpenData (const Arguments& args) :ArgsData(args), FilenameData(args) {
           omode = NOU(ARG1) ? TDBOREADER : ARG1->Int32Value();
         }
 
@@ -2804,7 +2804,7 @@ class TDB : public TCWrap {
     class OpenAsyncData : public OpenData, public AsyncData {
       public:
         OpenAsyncData (const Arguments& args)
-          : OpenData(args), AsyncData(args[2]), ArgsData(args) {}
+          : ArgsData(args), FilenameData(args), OpenData(args), AsyncData(args[2]) {}
     };
 
     DEFINE_ASYNC(Open)
@@ -2825,7 +2825,7 @@ class TDB : public TCWrap {
         TCMAP *map;
 
       public:
-        PutData (const Arguments& args) : KeyData(args) {
+      PutData (const Arguments& args) :ArgsData(args), KeyData(args) {
           map = objtotcmap(Local<Object>::Cast(args[1]));
         }
 
@@ -2914,7 +2914,7 @@ class TDB : public TCWrap {
         TCMAP *map;
 
       public:
-        GetData (const Arguments& args) : KeyData(args) {}
+      GetData (const Arguments& args) :ArgsData(args), KeyData(args) {}
 
         ~GetData () {
           tcmapdel(map);
@@ -3454,9 +3454,9 @@ class ADB : TCWrap {
       return tcadbopen(adb, path);
     }
 
-    class OpenData : public FilenameData {
+    class OpenData : public virtual FilenameData {
       public:
-        OpenData (const Arguments& args) : FilenameData(args) {}
+      OpenData (const Arguments& args) :ArgsData(args), FilenameData(args) {}
 
         bool run () {
           return tcw->Open(*path);
@@ -3468,7 +3468,7 @@ class ADB : TCWrap {
     class OpenAsyncData : public OpenData, public AsyncData {
       public:
         OpenAsyncData (const Arguments& args)
-          : OpenData(args), AsyncData(args[1]), ArgsData(args) {}
+          : ArgsData(args), FilenameData(args), OpenData(args), AsyncData(args[1]) {}
     };
 
     DEFINE_ASYNC(Open)
@@ -3698,7 +3698,7 @@ class ADB : TCWrap {
 
     class MiscAsyncData : public MiscData, public AsyncData {
       public:
-        MiscAsyncData (const Arguments& args) : 
+      MiscAsyncData (const Arguments& args) : ArgsData(args),
           AsyncData(args[2]), MiscData(args) {}
     };
 

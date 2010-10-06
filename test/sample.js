@@ -75,6 +75,7 @@ sys.puts("Tokyo Cabinet version " + TC.VERSION);
   cur.first();
   var key;
   while ((key = cur.key()) !== null) {
+
     var value = cur.val();
     if (value) {
       sys.puts(key + ":" + value);
@@ -196,7 +197,7 @@ sys.puts("Tokyo Cabinet version " + TC.VERSION);
   if (!adb.open('casket.tcb')) {
     sys.error("open error");
   }
-  sys.puts(adb.misc("ecode"))
+//  sys.puts(adb.misc("ecode"));
 
   if (!adb.put("foo", "hop") ||
       !adb.put("bar", "step") ||
