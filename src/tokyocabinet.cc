@@ -618,7 +618,7 @@ class TCWrap : public ObjectWrap {
 
     class OutData : public KeyData {
       public:
-        OutData (const Arguments& args) : KeyData(args) {}
+        OutData (const Arguments& args) : ArgsData(args), KeyData(args) {}
 
         bool
         run () {
