@@ -493,7 +493,7 @@ class TCWrap : public ObjectWrap {
         int vsiz;
 
       public:
-      PutData (const Arguments& args) :ArgsData(args), vbuf(args[1]), KeyData(args) {
+      PutData (const Arguments& args) : ArgsData(args), vbuf(args[1]), KeyData(args) {
           vsiz = vbuf.length();
         }
 
@@ -578,7 +578,7 @@ class TCWrap : public ObjectWrap {
         TCLIST *list;
 
       public:
-        PutlistData (const Arguments& args) : KeyData(args) {
+        PutlistData (const Arguments& args) : ArgsData(args), KeyData(args) {
           HandleScope scope;
           list = arytotclist(Handle<Array>::Cast(ARG0));
         }
@@ -634,7 +634,7 @@ class TCWrap : public ObjectWrap {
 
     class OutlistData : public KeyData {
       public:
-        OutlistData (const Arguments& args) : KeyData(args) {}
+        OutlistData (const Arguments& args) : ArgsData(args), KeyData(args) {}
 
         bool
         run () {
@@ -670,7 +670,7 @@ class TCWrap : public ObjectWrap {
         TCLIST *list;
 
       public:
-        GetlistData (const Arguments& args) : KeyData(args) {}
+        GetlistData (const Arguments& args) : ArgsData(args), KeyData(args) {}
 
         ~GetlistData () {
           tclistdel(list);
@@ -727,7 +727,7 @@ class TCWrap : public ObjectWrap {
         int vnum;
 
       public:
-        VnumData (const Arguments& args) : KeyData(args) {}
+        VnumData (const Arguments& args) : ArgsData(args), KeyData(args) {}
 
         bool
         run () {
@@ -753,7 +753,7 @@ class TCWrap : public ObjectWrap {
         int vsiz;
 
       public:
-        VsizData (const Arguments& args) : KeyData(args) {}
+        VsizData (const Arguments& args) : ArgsData(args), KeyData(args) {}
 
         bool
         run () {
@@ -779,7 +779,7 @@ class TCWrap : public ObjectWrap {
         int num;
 
       public:
-        AddintData (const Arguments& args) : KeyData(args) {
+        AddintData (const Arguments& args) : ArgsData(args), KeyData(args) {
           num = args[1]->Int32Value();
         }
 
@@ -843,7 +843,7 @@ class TCWrap : public ObjectWrap {
         double num;
 
       public:
-        AdddoubleData (const Arguments& args) : KeyData(args) {
+        AdddoubleData (const Arguments& args) : ArgsData(args), KeyData(args) {
           num = args[1]->NumberValue();
         }
 
@@ -2040,7 +2040,7 @@ class CUR : TCWrap {
 
     class JumpData : public KeyData {
       public:
-      JumpData(const Arguments& args) :ArgsData(args), KeyData(args) {}
+      JumpData(const Arguments& args) : ArgsData(args), KeyData(args) {}
 
         bool run () {
           return tcw->Jump(*kbuf, ksiz);
@@ -2825,7 +2825,7 @@ class TDB : public TCWrap {
         TCMAP *map;
 
       public:
-      PutData (const Arguments& args) :ArgsData(args), KeyData(args) {
+      PutData (const Arguments& args) : ArgsData(args), KeyData(args) {
           map = objtotcmap(Local<Object>::Cast(args[1]));
         }
 
@@ -2914,7 +2914,7 @@ class TDB : public TCWrap {
         TCMAP *map;
 
       public:
-      GetData (const Arguments& args) :ArgsData(args), KeyData(args) {}
+      GetData (const Arguments& args) : ArgsData(args), KeyData(args) {}
 
         ~GetData () {
           tcmapdel(map);
